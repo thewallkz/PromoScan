@@ -16,12 +16,17 @@ TERMOS_USADOS = [
 def iniciar_driver():
     chrome_options = Options()
     
-    # --- CONFIGURAÇÕES OBRIGATÓRIAS PARA NUVEM/DOCKER ---
-    chrome_options.add_argument("--headless=new") # Sem janela (Obrigatório na nuvem)
-    chrome_options.add_argument("--no-sandbox") # Obrigatório para Docker (Root)
-    chrome_options.add_argument("--disable-dev-shm-usage") # Evita erro de memória compartilhada
+    # --- CONFIGURAÇÕES PARA NUVEM (Adicionei as 3 últimas linhas desta lista) ---
+    chrome_options.add_argument("--headless=new") 
+    chrome_options.add_argument("--no-sandbox") 
+    chrome_options.add_argument("--disable-dev-shm-usage") 
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080") # Define tamanho fixo para garantir que elementos apareçam
+    chrome_options.add_argument("--window-size=1920,1080")
+    
+    # NOVAS OTIMIZAÇÕES DE MEMÓRIA:
+    chrome_options.add_argument("--disable-extensions") # Não carrega extensões
+    chrome_options.add_argument("--disable-images") # Tenta não renderizar imagens internamente (economiza RAM)
+    chrome_options.add_argument("--blink-settings=imagesEnabled=false") # Reforça sem imagens no motor
     
     chrome_options.add_argument("--start-maximized")
     

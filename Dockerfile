@@ -26,4 +26,5 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 7. Comando para iniciar o site
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
+#TIMEOUT DE 120 SEGUNDOS (2 minutos)
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "120", "app:app"]
