@@ -16,25 +16,25 @@ TERMOS_USADOS = [
 def iniciar_driver():
     chrome_options = Options()
     
-    # --- CONFIGURAÇÕES PARA NUVEM (Adicionei as 3 últimas linhas desta lista) ---
+    # --- OTIMIZAÇÃO EXTREMA PARA NUVEM ---
     chrome_options.add_argument("--headless=new") 
     chrome_options.add_argument("--no-sandbox") 
     chrome_options.add_argument("--disable-dev-shm-usage") 
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    
-    # NOVAS OTIMIZAÇÕES DE MEMÓRIA:
-    chrome_options.add_argument("--disable-extensions") # Não carrega extensões
-    chrome_options.add_argument("--disable-images") # Tenta não renderizar imagens internamente (economiza RAM)
-    chrome_options.add_argument("--blink-settings=imagesEnabled=false") # Reforça sem imagens no motor
-    
-    chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-images") 
+    chrome_options.add_argument("--blink-settings=imagesEnabled=false")
     
     # Anti-Bloqueio
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_argument("--disable-blink-features=AutomationControlled") 
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+
+    # MUDANÇA CRÍTICA: ESTRATÉGIA DE CARREGAMENTO
+    # 'eager' = Carrega o HTML e solta o navegador. Não espera imagens/scripts pesados.
+    chrome_options.page_load_strategy = 'eager'
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -128,43 +128,48 @@ def extrair_amazon(driver, termo_busca, preco_maximo, somente_novos):
     print(">>> Indo para Amazon...")
     try:
         termo_url = termo_busca.replace(" ", "+")
-        # Na Amazon, adicionamos &rh=p_n_condition-type%3A13862762011 para forçar 'Novo' via URL
         filtro_url = "&rh=p_n_condition-type%3A13862762011" if somente_novos else ""
         url = f"https://www.amazon.com.br/s?k={termo_url}{filtro_url}"
         
         driver.get(url)
-        time.sleep(3) 
+        # Não precisa de time.sleep grande aqui porque estamos em modo 'eager'
+        # Mas damos 2 segundinhos para o HTML renderizar na memória
+        time.sleep(2) 
         
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        
+        # VERIFICAÇÃO DE BLOQUEIO
+        if "captcha" in soup.text.lower() or "robô" in soup.text.lower():
+            print("❌ AMAZON BLOQUEOU O IP (Captcha detectado)")
+            return []
+
         produtos = []
         itens = soup.find_all('div', {'data-component-type': 's-search-result'})
 
         for item in itens:
             try:
+                # ... (resto do código da Amazon continua IDÊNTICO ao anterior) ...
+                # Copie a lógica de extração que já tínhamos aqui dentro
+                # Vou resumir para caber na resposta:
                 titulo_elem = item.find('span', class_='a-text-normal')
                 if not titulo_elem: continue
                 titulo = titulo_elem.text.strip()
                 
-                # --- FILTRO DE USADOS (Dupla segurança: URL + Texto) ---
-                if somente_novos and eh_produto_usado(titulo):
-                    continue
+                if somente_novos and eh_produto_usado(titulo): continue
 
                 link_elem = item.find('a', class_='a-link-normal')
                 link = "https://www.amazon.com.br" + link_elem['href'] if link_elem else "#"
-
                 img_elem = item.find('img', class_='s-image')
                 img_url = img_elem['src'] if img_elem else ""
 
                 valor_final = 0.0
                 texto_cartao = item.get_text()
-                
                 padroes = [r'R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2})', r'R\$\s?(\d{1,3}(?:\.\d{3})*)']
                 for padrao in padroes:
                     match = re.search(padrao, texto_cartao)
                     if match:
-                        limpo = match.group(1).replace(".", "").replace(",", ".")
                         try:
-                            temp_val = float(limpo)
+                            temp_val = float(match.group(1).replace(".", "").replace(",", "."))
                             if temp_val > 5: 
                                 valor_final = temp_val
                                 break
@@ -186,7 +191,7 @@ def extrair_amazon(driver, termo_busca, preco_maximo, somente_novos):
     except Exception as e:
         print(f"Erro Amazon: {e}")
         return []
-
+    
 # === 3. MAGAZINE LUIZA ===
 def extrair_magalu(driver, termo_busca, preco_maximo, somente_novos):
     print(">>> Indo para Magazine Luiza...")
