@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SaaS Promo - Busca</title>
+    <style>
+      /* --- VARIÁVEIS DE CORES --- */
+      :root {
+        --bg-color: #f4f4f9;
+        --card-bg: #ffffff;
+        --text-color: #333333;
+        --subtext-color: #666666;
+        --input-bg: #ffffff;
+        --input-border: #ddd;
+        --shadow: rgba(0, 0, 0, 0.1);
+      }
+
+      [data-theme="dark"] {
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --text-color: #e0e0e0;
+        --subtext-color: #aaaaaa;
+        --input-bg: #2c2c2c;
+        --input-border: #444;
+        --shadow: rgba(0, 0, 0, 0.5);
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .container {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px var(--shadow);
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: 300;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--subtext-color);
+        font-weight: 500;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 20px;
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        box-sizing: border-box;
+        color: var(--text-color);
+        font-size: 16px;
+      }
+
+      /* Estilo do Checkbox */
+      .checkbox-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 25px;
+        background: var(--input-bg);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--input-border);
+      }
+      .checkbox-container input {
+        width: auto;
+        margin-bottom: 0;
+        margin-right: 10px;
+        height: 20px;
+        width: 20px;
+        cursor: pointer;
+      }
+      .checkbox-container label {
+        margin-bottom: 0;
+        cursor: pointer;
+        font-size: 0.95em;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      /* Botão Switch (Dark Mode) */
+      .theme-switch-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        font-size: 0.9em;
+        color: var(--subtext-color);
+      }
+      .theme-switch {
+        display: inline-block;
+        height: 24px;
+        position: relative;
+        width: 50px;
+        margin-left: 10px;
+      }
+      .theme-switch input {
+        display: none;
+      }
+      .slider {
+        background-color: #ccc;
+        bottom: 0;
+        cursor: pointer;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        background-color: #fff;
+        bottom: 4px;
+        content: "";
+        height: 16px;
+        left: 4px;
+        position: absolute;
+        transition: 0.4s;
+        width: 16px;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #0d6efd;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="theme-switch-wrapper">
+        <span>Tema Escuro</span>
+        <label class="theme-switch" for="checkbox">
+          <input type="checkbox" id="checkbox" />
+          <div class="slider"></div>
+        </label>
+      </div>
+
+      <h1>🔍 Rastreador</h1>
+
+      <form action="/pesquisar" method="POST">
+        <label>O que você procura?</label>
+        <input
+          type="text"
+          name="produto"
+          placeholder="Ex: iPhone 13"
+          required
+        />
+
+        <label>Preço Máximo (R$):</label>
+        <input type="number" name="preco" placeholder="Ex: 4000" required />
+
+        <label>Escolha a Loja:</label>
+        <select name="loja">
+          <option value="todas">⚡ Comparar Todas as Lojas</option>
+          <option value="ml">Mercado Livre</option>
+          <option value="amazon">Amazon Brasil</option>
+          <option value="magalu">Magazine Luiza</option>
+        </select>
+
+        <div class="checkbox-container">
+          <input type="checkbox" name="novos" id="novos" checked />
+          <label for="novos">Ignorar Usados / Vitrine</label>
+        </div>
+
+        <button type="submit">Buscar Melhores Preços</button>
+      </form>
+    </div>
+
+    <script>
+      // Tema
+      const toggleSwitch = document.querySelector(
+        '.theme-switch input[type="checkbox"]'
+      );
+      const currentTheme = localStorage.getItem("theme");
+
+      if (currentTheme) {
+        document.documentElement.setAttribute("data-theme", currentTheme);
+        if (currentTheme === "dark") toggleSwitch.checked = true;
+      }
+
+      function switchTheme(e) {
+        if (e.target.checked) {
+          document.documentElement.setAttribute("data-theme", "dark");
+          localStorage.setItem("theme", "dark");
+        } else {
+          document.documentElement.setAttribute("data-theme", "light");
+          localStorage.setItem("theme", "light");
+        }
+      }
+      toggleSwitch.addEventListener("change", switchTheme, false);
+
+      // Loading
+      const form = document.querySelector("form");
+      const btn = document.querySelector("button");
+
+      form.addEventListener("submit", function () {
+        btn.innerHTML = "⏳ Pesquisando nas lojas... aguarde...";
+        btn.style.opacity = "0.7";
+        btn.style.cursor = "wait";
+      });
+    </script>
+  </body>
+</html>
