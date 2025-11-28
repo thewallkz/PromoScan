@@ -15,8 +15,17 @@ TERMOS_USADOS = [
 
 def iniciar_driver():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless") 
+    
+    # --- CONFIGURAÇÕES OBRIGATÓRIAS PARA NUVEM/DOCKER ---
+    chrome_options.add_argument("--headless=new") # Sem janela (Obrigatório na nuvem)
+    chrome_options.add_argument("--no-sandbox") # Obrigatório para Docker (Root)
+    chrome_options.add_argument("--disable-dev-shm-usage") # Evita erro de memória compartilhada
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080") # Define tamanho fixo para garantir que elementos apareçam
+    
     chrome_options.add_argument("--start-maximized")
+    
+    # Anti-Bloqueio
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_argument("--disable-blink-features=AutomationControlled") 

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>SaaS Promo - Busca</title>
+    <title>PromoScan - Busca</title>
     <style>
       /* --- VARIÁVEIS DE CORES --- */
       :root {
@@ -97,6 +97,39 @@
         cursor: pointer;
         font-size: 0.95em;
       }
+      /* Estilo do Logo PromoScan */
+      .logo-container {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo-icon {
+        font-size: 2.5em;
+        display: block;
+        margin-bottom: 5px;
+        animation: pulse 2s infinite;
+      }
+      .logo-text {
+        font-family: "Segoe UI", sans-serif;
+        font-size: 2.2em;
+        font-weight: 800;
+        color: var(--text-color);
+        letter-spacing: -1px;
+      }
+      .logo-highlight {
+        color: #0d6efd; /* Azul do botão */
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
 
       button {
         width: 100%;
@@ -173,7 +206,12 @@
         </label>
       </div>
 
-      <h1>🔍 Rastreador</h1>
+      <div class="logo-container">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text"
+          >Promo<span class="logo-highlight">Scan</span></span
+        >
+      </div>
 
       <form action="/pesquisar" method="POST">
         <label>O que você procura?</label>
