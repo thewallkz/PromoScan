@@ -13,6 +13,4 @@ Atualmente estou tendo problemas em mascarar IP da VM. Entao so estao sendo feit
   Tentatei adiantar o quanto antes uma otimizacao no sistema de busca (backend)
 
 #### Tecnologias
-Frontend: HTML, CSS
-Backend: Python
-Estrutura: Docker
+Frontend: HTML, CSS | Backend: Python | Estrutura: Docker
