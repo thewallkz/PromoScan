@@ -1,16 +1,41 @@
 # PromoScan
-## Busque produtos com valores do seu interesse nas 3 maiores e-commerces do pais
-Opcoes de pesquisa: Mercado Livre, Amazon Brasil , Magazine Luiza e ambos junto
-Atualmente estou tendo problemas em mascarar IP da VM. Entao so estao sendo feitas pesquisas no Mercado Livre
 
-### Melhorias futuras
-- Criacao de perfil opcional, pois a funcionalidade citada abaixo sera para contas registradas e autenticadas
-- Criar ticket de interesse, e sempre que surgir uma promocao do produto escolhido com preco abaixo do colocado pelo usuario, ele recebera uma notificacao pelo WPP
-- Criar secao para cupons e desenvolver ferramenta para verificar situacao do cupom
-- Caso o produto procurado seja compativel com cupons disponiveis, sera exibido o preco ja com deducao do cupom
+### Busque produtos com valores do seu interesse nos 3 maiores e-commerces do país.
 
-  Projeto idealizado e inicializado 3 horas antes do inicio da black friday, entao tenham paciencia principalmente com o tempo de execucao das tarefas.
-  Tentatei adiantar o quanto antes uma otimizacao no sistema de busca (backend)
+> **⚠️ Nota sobre o Estado Atual:**
+> Opções de pesquisa: Mercado Livre, Amazon Brasil, Magazine Luiza e ambos juntos.
+>
+> **Atualmente estou tendo problemas em mascarar o IP da VM (Máquina Virtual) na nuvem.** Por conta disso, no ambiente de produção online, as pesquisas estão retornando resultados consistentemente apenas no **Mercado Livre**. Amazon e Magalu podem apresentar instabilidade devido a bloqueios de região/datacenter.
 
-#### Tecnologias
-Frontend: HTML, CSS | Backend: Python | Estrutura: Docker
+---
+
+###  Sobre o Projeto
+
+Projeto idealizado e inicializado **3 horas antes do início da Black Friday**.
+
+Peço paciência principalmente com o tempo de execução das tarefas, pois o sistema realiza varreduras em tempo real. Tentarei adiantar o quanto antes uma otimização no sistema de busca (backend).
+
+###  Melhorias Futuras
+
+* **Criação de perfil opcional:** A funcionalidade de notificações (citada abaixo) será exclusiva para contas registradas e autenticadas.
+* **Ticket de Interesse:** O usuário poderá criar um alerta de preço. Sempre que surgir uma promoção do produto escolhido com preço abaixo do estipulado, ele receberá uma notificação pelo WhatsApp.
+* **Seção de Cupons:** Desenvolver ferramenta para verificar a situação e validade de cupons.
+* **Cálculo Automático:** Caso o produto procurado seja compatível com cupons disponíveis, o sistema exibirá o preço já com a dedução do cupom aplicada.
+
+---
+
+###  Tecnologias Utilizadas
+
+**Frontend**
+* **HTML5 & CSS3:** Interface responsiva com variáveis CSS para suporte a Tema Escuro (Dark Mode).
+
+**Backend**
+* **Python 3.9+:** Linguagem core do sistema.
+* **Flask:** Framework web para gerenciamento de rotas e requisições.
+* **Selenium WebDriver:** Automação de navegador para extração de dados em sites dinâmicos (SPA).
+* **BeautifulSoup4:** Parsing de HTML para extração de metadados.
+
+**Infraestrutura & DevOps**
+* **Docker:** Containerização da aplicação (Linux + Python + Chrome).
+* **Google Chrome (Headless):** Navegador utilizado pelo robô no servidor.
+* **Render:** Plataforma de hospedagem em nuvem.
