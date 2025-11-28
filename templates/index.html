@@ -227,10 +227,18 @@
 
         <label>Escolha a Loja:</label>
         <select name="loja">
-          <option value="todas">⚡ Comparar Todas as Lojas</option>
-          <option value="ml">Mercado Livre</option>
-          <option value="amazon">Amazon Brasil</option>
-          <option value="magalu">Magazine Luiza</option>
+          <option value="todas" disabled style="color: #888">
+            ⚡ Comparar Todas (Em manutenção)
+          </option>
+
+          <option value="ml" selected>Mercado Livre</option>
+
+          <option value="amazon" disabled style="color: #888">
+            Amazon Brasil (Em manutenção)
+          </option>
+          <option value="magalu" disabled style="color: #888">
+            Magazine Luiza (Em manutenção)
+          </option>
         </select>
 
         <div class="checkbox-container">
