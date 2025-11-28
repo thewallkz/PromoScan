@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 
-# === LISTA NEGRA DE PALAVRAS ===
+# === LISTA NEGRA ===
 TERMOS_USADOS = [
     "usado", "recondicionado", "vitrine", "seminovo", "semi-novo", 
     "renewed", "renovado", "grade a", "grade b", "grade c", 
@@ -16,7 +16,7 @@ TERMOS_USADOS = [
 def iniciar_driver():
     chrome_options = Options()
     
-    # --- OTIMIZAÇÃO EXTREMA PARA NUVEM ---
+    # --- CONFIGURAÇÃO NUVEM ---
     chrome_options.add_argument("--headless=new") 
     chrome_options.add_argument("--no-sandbox") 
     chrome_options.add_argument("--disable-dev-shm-usage") 
@@ -26,28 +26,25 @@ def iniciar_driver():
     chrome_options.add_argument("--disable-images") 
     chrome_options.add_argument("--blink-settings=imagesEnabled=false")
     
-    # Anti-Bloqueio
+    # ESTRATÉGIA DE CARREGAMENTO (Mantemos Eager para economizar RAM)
+    chrome_options.page_load_strategy = 'eager'
+
+    # --- CAMUFLAGEM DE WINDOWS (NOVO!) ---
+    # Mentimos que somos um Windows normal, não um servidor Linux
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_argument("--disable-blink-features=AutomationControlled") 
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
-
-    # MUDANÇA CRÍTICA: ESTRATÉGIA DE CARREGAMENTO
-    # 'eager' = Carrega o HTML e solta o navegador. Não espera imagens/scripts pesados.
-    chrome_options.page_load_strategy = 'eager'
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-# === FUNÇÃO AUXILIAR DE FILTRO ===
 def eh_produto_usado(titulo):
-    """Retorna True se o título contiver palavras de produtos usados"""
     titulo_lower = titulo.lower()
     for termo in TERMOS_USADOS:
-        # Verifica se o termo está no título (ex: "iPhone Vitrine" contém "vitrine")
-        if termo in titulo_lower:
-            return True
+        if termo in titulo_lower: return True
     return False
 
 # === 1. MERCADO LIVRE ===
@@ -55,9 +52,9 @@ def extrair_mercadolivre(driver, termo_busca, preco_maximo, somente_novos):
     print(">>> Indo para Mercado Livre...")
     try:
         termo_url = termo_busca.replace(" ", "-")
-        url = f"https://lista.mercadolivre.com.br/{termo_url}_Condicion_Nuevo" # Tenta filtrar via URL também
+        url = f"https://lista.mercadolivre.com.br/{termo_url}_Condicion_Nuevo"
         driver.get(url)
-        time.sleep(3)
+        time.sleep(3) # ML é leve, carrega rápido
         
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         produtos = []
@@ -73,9 +70,7 @@ def extrair_mercadolivre(driver, termo_busca, preco_maximo, somente_novos):
                 if not titulo_elem: continue
                 titulo = titulo_elem.text.strip()
                 
-                # --- FILTRO DE USADOS ---
-                if somente_novos and eh_produto_usado(titulo):
-                    continue # Pula este item
+                if somente_novos and eh_produto_usado(titulo): continue
 
                 link_elem = item.find('a', class_='ui-search-link') or item.find('a', class_='poly-component__title-link')
                 link = "#"
@@ -132,25 +127,23 @@ def extrair_amazon(driver, termo_busca, preco_maximo, somente_novos):
         url = f"https://www.amazon.com.br/s?k={termo_url}{filtro_url}"
         
         driver.get(url)
-        # Não precisa de time.sleep grande aqui porque estamos em modo 'eager'
-        # Mas damos 2 segundinhos para o HTML renderizar na memória
-        time.sleep(2) 
+        time.sleep(5) # Aumentei espera para tentar vencer bloqueio
         
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        
-        # VERIFICAÇÃO DE BLOQUEIO
-        if "captcha" in soup.text.lower() or "robô" in soup.text.lower():
-            print("❌ AMAZON BLOQUEOU O IP (Captcha detectado)")
+        # --- DIAGNÓSTICO DE BLOQUEIO ---
+        titulo_pag = driver.title
+        if "Captcha" in titulo_pag or "Sorry" in titulo_pag:
+            print(f"❌ AMAZON BLOQUEOU: Título da página foi '{titulo_pag}'")
             return []
 
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
         produtos = []
         itens = soup.find_all('div', {'data-component-type': 's-search-result'})
+        
+        if not itens:
+            print(f"⚠️ Amazon retornou 0 itens. Título da página: {driver.title}")
 
         for item in itens:
             try:
-                # ... (resto do código da Amazon continua IDÊNTICO ao anterior) ...
-                # Copie a lógica de extração que já tínhamos aqui dentro
-                # Vou resumir para caber na resposta:
                 titulo_elem = item.find('span', class_='a-text-normal')
                 if not titulo_elem: continue
                 titulo = titulo_elem.text.strip()
@@ -159,17 +152,20 @@ def extrair_amazon(driver, termo_busca, preco_maximo, somente_novos):
 
                 link_elem = item.find('a', class_='a-link-normal')
                 link = "https://www.amazon.com.br" + link_elem['href'] if link_elem else "#"
+
                 img_elem = item.find('img', class_='s-image')
                 img_url = img_elem['src'] if img_elem else ""
 
                 valor_final = 0.0
                 texto_cartao = item.get_text()
+                
                 padroes = [r'R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2})', r'R\$\s?(\d{1,3}(?:\.\d{3})*)']
                 for padrao in padroes:
                     match = re.search(padrao, texto_cartao)
                     if match:
+                        limpo = match.group(1).replace(".", "").replace(",", ".")
                         try:
-                            temp_val = float(match.group(1).replace(".", "").replace(",", "."))
+                            temp_val = float(limpo)
                             if temp_val > 5: 
                                 valor_final = temp_val
                                 break
@@ -191,7 +187,7 @@ def extrair_amazon(driver, termo_busca, preco_maximo, somente_novos):
     except Exception as e:
         print(f"Erro Amazon: {e}")
         return []
-    
+
 # === 3. MAGAZINE LUIZA ===
 def extrair_magalu(driver, termo_busca, preco_maximo, somente_novos):
     print(">>> Indo para Magazine Luiza...")
@@ -199,11 +195,19 @@ def extrair_magalu(driver, termo_busca, preco_maximo, somente_novos):
         termo_url = termo_busca.replace(" ", "+")
         url = f"https://www.magazineluiza.com.br/busca/{termo_url}/"
         driver.get(url)
-        time.sleep(3) 
+        
+        # --- CORREÇÃO PARA MODO 'EAGER' NA NUVEM ---
+        # Como o eager não espera o site carregar, e o Magalu é pesado,
+        # precisamos forçar uma espera maior e um scroll para o JS funcionar.
+        time.sleep(6) 
+        driver.execute_script("window.scrollTo(0, 200);")
         
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         produtos = []
         itens = soup.find_all('a', {'data-testid': 'product-card-container'})
+
+        if not itens:
+            print(f"⚠️ Magalu retornou 0 itens. Título: {driver.title}")
 
         for item in itens:
             try:
@@ -211,14 +215,12 @@ def extrair_magalu(driver, termo_busca, preco_maximo, somente_novos):
                 if not titulo_elem: continue
                 titulo = titulo_elem.text.strip()
                 
-                # --- FILTRO DE USADOS ---
-                if somente_novos and eh_produto_usado(titulo):
-                    continue
+                if somente_novos and eh_produto_usado(titulo): continue
 
                 link_relativo = item['href']
                 link = "https://www.magazineluiza.com.br" + link_relativo if link_relativo.startswith('/') else link_relativo
                 
-                img_url = ""
+                img_url = "" # Sem foto
 
                 texto_todo = item.get_text()
                 matches = re.findall(r'R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2})', texto_todo)
@@ -268,9 +270,10 @@ def buscar_produtos(termo_busca, preco_maximo, loja='ml', somente_novos=True):
 
     try:
         if loja == 'todas':
-            resultados.extend(extrair_mercadolivre(driver, termo_busca, preco_maximo, somente_novos))
+            # Ordem: Amazon primeiro (mais difícil), depois Magalu, depois ML (mais fácil)
             resultados.extend(extrair_amazon(driver, termo_busca, preco_maximo, somente_novos))
             resultados.extend(extrair_magalu(driver, termo_busca, preco_maximo, somente_novos))
+            resultados.extend(extrair_mercadolivre(driver, termo_busca, preco_maximo, somente_novos))
         
         elif loja == 'amazon':
             resultados = extrair_amazon(driver, termo_busca, preco_maximo, somente_novos)
@@ -282,6 +285,7 @@ def buscar_produtos(termo_busca, preco_maximo, loja='ml', somente_novos=True):
     except Exception as e:
         print(f"Erro Crítico no Loop: {e}")
     finally:
+        print("🏁 Finalizando navegador.")
         driver.quit()
 
     return resultados
